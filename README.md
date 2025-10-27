@@ -41,7 +41,7 @@ The output tables share the same schema for drop‑in use across reporting or da
 ```
 pcds, doterm, oscty, oslaua, osward, usertype,
 oseast1m, osnrth1m, osgrdind, ctry, rgn, pcon,
-lsoa21, msoa21, ur01ind, lat, long
+lsoa21, msoa21, lat, long
 ```
 
 ---
