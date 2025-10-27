@@ -1,115 +1,157 @@
-# 🗺️ UK Postcode Lookup Builder (Power Query)
+# 🗺️ UK Postcode Lookup Builder (ONSPD & NSPL Versions)
 
-This project builds a consolidated **postcode lookup table** using open data from the **Office for National Statistics (ONS)** and the **Register of Geographic Codes (RGC)**.  
-It’s designed for use in Power BI / Power Query pipelines where postcode data is needed to join CRM or service data to current UK geographic areas (Local Authority, Region, Constituency, etc.).
+This repository provides Power Query (M) scripts to build harmonised postcode lookup tables using two open datasets published by the **Office for National Statistics (ONS)**:
 
----
+- **ONS Postcode Directory (ONSPD)** — comprehensive coverage of current and historical postcodes.  
+- **National Statistics Postcode Lookup (NSPL)** — similar coverage with simplified and updated geography columns.
 
-## 📋 Overview
-
-The Power Query script [`PostcodeLookup.pq`](PostcodeLookup.pq) automates the process of:
-
-1. Loading the **ONS Postcode Directory (ONSPD)** — or, optionally, the **National Statistics Postcode Lookup (NSPL)**.
-2. Joining related **Register of Geographic Codes** (UK and Scotland) to enrich each postcode with readable names.
-3. Filtering out postcodes terminated before a configurable date (default: January 2013).
-4. Producing a single, clean table ready to load into Power BI or other analytical tools.
-
-Output column set includes postcode, key codes (LAD, ward, region, etc.), human-readable area names, coordinates, and a flag for “live” postcodes.
+Both versions integrate with the **Register of Geographic Codes (RGC)** to attach readable area names for local authorities, regions, and other statistical areas.  
+The output tables share the same schema for drop‑in use across reporting or data‑integration pipelines.
 
 ---
 
-## 🧩 Data Sources
+## 📁 Repository Contents
 
-| Dataset | Description | Publisher | Update Frequency |
-|----------|--------------|------------|------------------|
-| **ONS Postcode Directory (ONSPD)** | Maps current and historic postcodes to statistical and administrative areas. | ONS Geography | Quarterly |
-| **National Statistics Postcode Lookup (NSPL)** | Alternative postcode lookup with simplified fields and similar coverage. | ONS Geography | Quarterly |
-| **Register of Geographic Codes (RGC)** – UK | Lookup of official geographic code names and statuses. | ONS Geography | Quarterly |
-| **Register of Geographic Codes (RGC)** – Scotland | Scottish Government maintained register of codes. | Scottish Government | Quarterly |
+```
+/PostcodeLookup
+ ├── Postcode_ONSPD.pq     # ONSPD version
+ ├── Postcode_NSPL.pq      # NSPL version
+ └── README_Combined.md    # This combined file
 
----
-
-## 🌐 Key Reference URLs
-
-- **Overview of ONS postcode products:**  
-  <https://www.ons.gov.uk/methodology/geography/geographicalproducts/postcodeproducts>
-
-- **ONS Open Geography Portal:**  
-  <https://geoportal.statistics.gov.uk/>
-
-- **Latest ONSPD releases (search results):**  
-  <https://geoportal.statistics.gov.uk/search?q=PRD_ONSPD%20AUG_2025&sort=Date%20Created%7Ccreated%7Cdesc>
-
-- **CSV version of the current ONSPD data file:**  
-  <https://geoportal.statistics.gov.uk/datasets/295e076b89b542e497e05632706ab429/about>
-
-- **Register of Geographic Codes (UK) – June 2025:**  
-  <https://geoportal.statistics.gov.uk/datasets/da3fb8af12e842a69255b0d21116bcaa/about>
-
-- **Register of Geographic Codes (Scotland):**  
-  <https://www.gov.scot/publications/geography-code-register-for-official-statistics/>
+```
 
 ---
 
-## ⚙️ Configuration
+## ⚙️ Overview of Each Version
 
-Edit the parameters at the top of `PostcodeLookup.pq`:
+### 🟩 ONSPD Version (`Postcode_ONSPD.pq`)
+
+- Source: **ONS Postcode Directory (ONSPD)**  
+- Typical filename: `ONSPD_AUG_2025_UK.csv`
+- Includes both live and terminated postcodes (since 1996)
+- Used when you require full historical coverage or compatibility with legacy ONS releases
+
+**Key URLs**
+- [ONS postcode product overview](https://www.ons.gov.uk/methodology/geography/geographicalproducts/postcodeproducts)
+- [Open Geography Portal](https://geoportal.statistics.gov.uk/)
+- [Current ONSPD releases](https://geoportal.statistics.gov.uk/search?q=PRD_ONSPD%20AUG_2025&sort=Date%20Created%7Ccreated%7Cdesc)
+- [CSV version (Aug 2025)](https://geoportal.statistics.gov.uk/datasets/295e076b89b542e497e05632706ab429/about)
+
+**Column set used**
+```
+pcds, doterm, oscty, oslaua, osward, usertype,
+oseast1m, osnrth1m, osgrdind, ctry, rgn, pcon,
+lsoa21, msoa21, ur01ind, lat, long
+```
+
+---
+
+### 🟦 NSPL Version (`Postcode_NSPL.pq`)
+
+- Source: **National Statistics Postcode Lookup (NSPL)**  
+- Typical filename: `NSPL_MAY_2025_UK.csv`
+- Updated for post‑2021 Census geography (e.g., ITL regions, IMD, LEP, ICB fields)
+- Used when working with current boundaries and slightly smaller file sizes
+
+**Key URLs**
+- [NSPL May 2025 release](https://geoportal.statistics.gov.uk/datasets/national-statistics-postcode-lookup-may-2025-for-the-uk/about)
+- [RGC June 2025 (UK)](https://geoportal.statistics.gov.uk/datasets/da3fb8af12e842a69255b0d21116bcaa/about)
+- [Scottish RGC](https://www.gov.scot/publications/geography-code-register-for-official-statistics/)
+
+**Column set used (before renaming)**
+```
+pcds, doterm, cty, laua, ward, usertype,
+oseast1m, osnrth1m, osgrdind,
+ctry, rgn, pcon,
+lsoa21, msoa21, lat, long
+```
+
+**Renamed for consistency with ONSPD**
+```
+cty   → oscty
+laua  → oslaua
+ward  → osward
+```
+
+---
+
+## 🧩 Shared Components
+
+Both versions:
+- Combine ONS/Scottish RGC data to enrich codes with human‑readable area names.  
+- Filter postcodes so that:
+  - All *live* postcodes are included.  
+  - Terminated postcodes are retained only if termination ≥ January 2013 (configurable).  
+
+allowing future extension (e.g., adding multiple derived tables).
+
+---
+
+## 🔧 Configuration
+
+At the top of both `.pq` files you’ll find configurable parameters:
 
 ```m
 SharePointRoot = "https://exampletenant.sharepoint.com/sites/exampleworkspace",
 FolderPath = "ReferenceData/Postcode",
 RGC_Scotland_File = "Register_of_Geographic_Codes_Scotland.xlsx",
 RGC_UK_File = "Register_of_Geographic_Codes_UK.xlsx",
-Postcode_File = "ONSPD_UK.csv",
+Postcode_File = "ONSPD_AUG_2025_UK.csv",   // or NSPL_MAY_2025_UK.csv
 FilterYear = 2013
 ```
 
-> **Note:**  
-> Never commit real tenant URLs or credentials to a public repository.  
-> Replace them with placeholders or use a local `config.json` that you `.gitignore`.
+> ⚠️ **Privacy note:**  
+> Do not publish real SharePoint or internal network URLs. Use placeholders or a local `config.json` file which you exclude via `.gitignore`.
 
 ---
 
 ## 🔄 Updating the Data
 
-1. **Download the latest ONSPD or NSPL files**
-   - Visit the [Open Geography Portal](https://geoportal.statistics.gov.uk/).
-   - Search for **“ONSPD”** or **“NSPL”** and select the latest quarterly release (ZIP file).
-   - Extract the CSV file (e.g., `ONSPD_AUG_2025_UK.csv`) into your local or SharePoint `ReferenceData/Postcode` folder.
-
-2. **Download updated RGC files**
-   - UK register (Excel): [ONS RGC June 2025](https://geoportal.statistics.gov.uk/datasets/da3fb8af12e842a69255b0d21116bcaa/about)
-   - Scotland register (Excel): [Scottish Government RGC](https://www.gov.scot/publications/geography-code-register-for-official-statistics/)
-
-3. **Update filenames** in the `.pq` script if the file names change (for example `ONSPD_MAY_2026.csv`).
-
-4. **Refresh the Power Query** to rebuild the lookup table with new data.
+1. Visit the [Open Geography Portal](https://geoportal.statistics.gov.uk/).  
+2. Search for **ONSPD** or **NSPL**, download the latest ZIP release.  
+3. Extract the CSV (e.g. `ONSPD_MAY_2026_UK.csv` or `NSPL_MAY_2026_UK.csv`) to your `ReferenceData/Postcode` folder.  
+4. Update the `Postcode_File` parameter in your `.pq` file.  
+5. Download updated **Register of Geographic Codes** for both UK and Scotland:  
+   - UK: [ONS RGC latest](https://geoportal.statistics.gov.uk/datasets/da3fb8af12e842a69255b0d21116bcaa/about)  
+   - Scotland: [Scottish RGC](https://www.gov.scot/publications/geography-code-register-for-official-statistics/)  
+6. Refresh your Power Query / Power BI dataset.
 
 ---
 
-## 🧠 Notes and Best Practice
+## 🧠 Notes & Best Practice
 
-- Keep both **live** and **terminated** postcodes if you need historical data linkage.  
-  For current reporting, the default filter keeps postcodes terminated after 2013 or still active.
-- You can switch to the NSPL dataset by adjusting the source CSV and column names.  
-  The overall logic remains the same.
-- ONS releases new versions quarterly (typically February, May, August, and November).  
-  It’s good practice to store both the raw files and the resulting processed table for reproducibility.
+- For **current reporting**, both datasets perform similarly. NSPL offers slightly more up‑to‑date administrative codes (e.g., ITL vs. NUTS).  
+- For **longitudinal or historical analysis**, prefer ONSPD because it retains terminated postcodes back to 1996.  
+- Both scripts maintain a `IsLive` flag for filtering live postcodes.  
+- Extend the `ColumnsToKeep` list if you need additional NSPL fields (e.g., `imd`, `lep1`, `pfa`, `icb`).
+
+---
+
+## 📦 Suggested Workflow
+
+| Step | Action | Notes |
+|------|---------|-------|
+| 1 | Download ONSPD or NSPL + RGC files | From ONS and Scottish portals |
+| 2 | Update `.pq` parameters | Point to latest filenames |
+| 3 | Refresh query | Builds unified lookup table |
+| 4 | Export to CSV / Dataflow | Optional for reuse across projects |
 
 ---
 
 ## 🧾 Licence
 
 Data © Crown copyright and database right.  
-Contains OS data © Crown copyright and database right 2025.  
-Contains Royal Mail data © Royal Mail copyright and database right 2025.  
-Contains National Statistics data © Crown copyright and database right 2025.
+Contains OS data © Crown copyright and database right 2025.  
+Contains Royal Mail data © Royal Mail copyright and database right 2025.  
+Contains National Statistics data © Crown copyright and database right 2025.
 
-Released under the [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
+Released under the [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
 
 ---
 
 ## ✨ Acknowledgements
 
-Maintained by **Phil Maynard**  
+Maintained by **Phil Maynard**  
 <https://philmaynard.uk>
+
+Inspired by open‑data integration work supporting UK charities and data teams.
